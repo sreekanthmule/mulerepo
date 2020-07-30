@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+	<http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+	<db:mysql-config name="MySQL_Configuration" host="localhost" port="3306" user="root" password="root" database="test" doc:name="MySQL Configuration"/>
+	<jms:activemq-connector name="Active_MQ" brokerURL="tcp://localhost:61616" validateConnections="true" doc:name="Active MQ"/>
+	<flow name="databaseFlow">
+		<http:listener config-ref="HTTP_Listener_Configuration" path="/hello" doc:name="HTTP"/>
+		<set-payload value="#[&quot;hello&quot;]" doc:name="Set Payload"/>
+	</flow>
+	<flow name="databaseFlow1">
+		<http:listener config-ref="HTTP_Listener_Configuration" path="/select" doc:name="HTTP"/>
+		<db:select config-ref="MySQL_Configuration" doc:name="Database">
+			<db:parameterized-query><![CDATA[select * from emp]]></db:parameterized-query>
+		</db:select>
+		<object-to-string-transformer doc:name="Object to String"/>
+	</flow>
+	<flow name="databaseFlow2">
+		<http:listener config-ref="HTTP_Listener_Configuration" path="/jms" doc:name="HTTP"/>
+		<byte-array-to-string-transformer doc:name="Byte Array to String"/>
+		<jms:outbound-endpoint queue="queuejms" connector-ref="Active_MQ" doc:name="JMS"/>
+	</flow>
+</mule>
